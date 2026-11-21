@@ -51,6 +51,7 @@ class VisionFeatures:
     head_yaw_deg: float = 0           # 选做
     head_roll_deg: float = 0          # 选做
     ambient_light: float | None = None  # 选做：画面平均亮度 0–1
+    yawns: int = 0
 
 @dataclass
 class Features:
