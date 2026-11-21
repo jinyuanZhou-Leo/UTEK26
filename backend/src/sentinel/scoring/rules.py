@@ -4,6 +4,8 @@
 
 #ex. WRIST_TYPING_S =20 is 0, WRIST_TYPING_FULL =60 is 1
 from sentinel.scoring import config as C
+from sentinel.models import FatigueState
+from sentinel.models import ComponentScores
 
 def ramp(value, start, full):
     """0 below start, 1 at full, straight line in between."""
@@ -76,6 +78,20 @@ class Rules:
             alert = {"target": worst, "message": C.ADVICE[worst]}
             self.last_alert_s = self.elapsed_s
 
-        return {"systemic_fatigue_score": total, "level": level,
-                "components": {k: round(v, 1) for k, v in self.parts.items()},
-                "calibrating": self.normal is None, "alert": alert}
+        return FatigueState(
+            timestamp="",
+            seq = 0,
+            sensors={"keyboard": kb.available, 
+                     "mouse": f.mouse.available,
+                     "context": f.context.available, 
+                     "vision": vis.available
+                     },
+            systemic_fatigue_score=total, 
+            level=level,
+            components=ComponentScores(round(self.parts["upper_extremity"], 1),
+                                       round(self.parts["ocular"], 1),
+                                       round(self.parts["postural"], 1), 
+                                       round(self.parts["cognitive"], 1)
+                                       ),
+            calibrating=self.normal is None,
+        )
