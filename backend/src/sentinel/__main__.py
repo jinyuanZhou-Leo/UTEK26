@@ -6,7 +6,7 @@ import uvicorn
 from sentinel import config
 from sentinel.api import server
 from sentinel.core.loop import Engine
-from sentinel.core.placeholders import NoInterventions, OfflineSensor
+from sentinel.core.placeholders import NoInterventions, OfflineSensor, PlaceholderModel
 from sentinel.models import KeyboardFeatures, VisionFeatures
 from sentinel.scoring.rules import Rules
 from sentinel.sensors.context.mock import MockContextSensor
