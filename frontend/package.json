@@ -30,8 +30,12 @@
     "react": "19.3.1",
     "react-day-picker": "^10.0.2",
     "react-dom": "19.3.1",
+<<<<<<< Updated upstream
     "react-resizable-panels": "^4.24.1",
     "recharts": "^3.8.0",
+=======
+    "recharts": "3.11.0",
+>>>>>>> Stashed changes
     "shadcn": "4.23.0",
     "shiki": "^4.6.0",
     "tailwind-merge": "3.7.1"
