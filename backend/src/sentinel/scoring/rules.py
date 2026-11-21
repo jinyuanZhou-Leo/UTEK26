@@ -31,18 +31,22 @@ class Rules:
         self.elapsed_s += dt   #add 5 seconds
 
 
-        # timers
+        # 1. timers
         self.work_s = 0.0 if idle >= C.BREAK_S else self.work_s + dt
         #if break > 5 minutes, rested, otherwise keep working(add 5 minutes)
 
         looked_away = (cam and vis.gaze_away_s >= C.LOOKAWAY_S) or idle >= C.LOOKAWAY_S
         # if idle>20s or camera see you look away with visual>20s, reset.
         self.screen_s = 0.0 if looked_away else self.screen_s + dt
+        #look away then reset screen, otherwise increase 5 seconds
         work_min, screen_min = self.work_s / 60, self.screen_s / 60
+        #translate to minutes
 
         # 2. remember the user's normal values once, at minute 10
         if self.normal is None and self.elapsed_s >= C.BASELINE * 60:
+        #if haven't record own value and ran for 10 minutes already
             self.normal = (vis.blink_rate_per_min, kb.iki_mean_ms, kb.backspace_ratio)
+            #store the user's own attributes
 
         # 3. loads (0-1) per body part
         wrist = (C.WRIST_TYPING_WEIGHT * ramp(kb.typing_burst_s * C.TIME_SCALE / 60, C.WRIST_TYPING_S, C.WRIST_TYPING_FULL)
@@ -50,14 +54,17 @@ class Rules:
         eye = ramp(screen_min, C.EYE_LOOKAWAY_S, C.EYE_LOOKAWAY_FULL)
         neck = ramp(work_min, C.NECK_SITTING_S, C.NECK_SITTING_FULL)
         mind = 0.0
-        if cam:  # head angle 0-45 deg ~ neck force 12-49 lb (Hansraj)
+
+
+        if cam:  # consider head angle when there's camera
             neck = 0.7 * ramp(vis.head_pitch_deg, 0, 45) + 0.3 * neck
-        if self.normal:
+            # 0.7 angle adding 0.3 sitting
+        if self.normal: #if recorded normal
             blink0, iki0, bs0 = self.normal
             if cam and blink0:
-                drop = (blink0 - vis.blink_rate_per_min) / blink0
-                eye = 0.6 * ramp(drop, C.EYE_BLINK_DROP_S, C.EYE_BLINK_DROP_FULL) + 0.4 * eye
-            if iki0 and bs0 and kb.iki_mean_ms > 0:
+                drop = (blink0 - vis.blink_rate_per_min) / blink0   #calculate decreasement
+                eye = 0.6 * ramp(drop, C.EYE_BLINK_DROP_S, C.EYE_BLINK_DROP_FULL) + 0.4 * eye   #update eye
+            if iki0 and bs0 and kb.iki_mean_ms > 0: #if nomally not 0 and typing right now
                 slower = (kb.iki_mean_ms - iki0) / iki0
                 more_bs = (kb.backspace_ratio - bs0) / bs0
                 mind = 0.5 * ramp(slower, C.MIND_SLOW_S, C.MIND_SLOW_FULL) \
@@ -69,20 +76,22 @@ class Rules:
             old, target = self.parts[name], load * 100
             minutes = C.RISE_MINUTES if target > old else C.FALL_MINUTES
             self.parts[name] = old + (target - old) * dt / (minutes * 60)
+            #increase slowly, decrease faster
 
         # 5. total = 0.6 x average + 0.4 x worst
-        values = list(self.parts.values())
+        values = list(self.parts.values())  #take all the value
         total = round(C.AVERAGE_WEIGHT * sum(values) / 4 + C.MAX_WEIGHT * max(values), 1)
         level = ("low" if total < C.LEVEL_MODERATE else "moderate" if total < C.LEVEL_HIGH
-                 else "high" if total < C.LEVEL_CRITICAL else "critical")
+                 else "high" if total < C.LEVEL_CRITICAL else "critical")   #display output
 
         # 6. alert: score high + user paused + not alerted in last 20 min
-        alert = None
+        alert = None    #default no alert
+        #high enough and just idle
         if total >= C.ALERT_ON and idle >= C.ALERT_IDLE_S \
-                and self.elapsed_s - self.last_alert_s >= C.ALERT_COOLDOWN_S:
-            worst = max(self.parts, key=self.parts.get)
+                and self.elapsed_s - self.last_alert_s >= C.ALERT_COOLDOWN_S:   #enough time just passed
+            worst = max(self.parts, key=self.parts.get) #find the worst score
             alert = {"target": worst, "message": C.ADVICE[worst]}
-            self.last_alert_s = self.elapsed_s
+            self.last_alert_s = self.elapsed_s  #record the current alert time
 
         return FatigueState(
             timestamp="",
