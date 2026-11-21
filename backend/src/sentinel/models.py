@@ -82,20 +82,14 @@ class Contribution:
 
 @dataclass
 class FatigueState:
-    schema_version: str               # "1.1"
     timestamp: str                    # ISO 8601 with offset, e.g. "2026-11-21T14:05:10-05:00"
     seq: int                          # starts at 0, +1 per tick (set by the main loop)
-    interval_s: float                 # 5.0
     systemic_fatigue_score: float     # 0–100, 1 decimal place
     level: str                        # "low"(<40) | "moderate"(40–65) | "high"(65–80) | "critical"(≥80)
-    trend_per_min: float              # score change per minute over the last 5 min
     components: ComponentScores
     top_contributors: list[Contribution]  # 1–3 most influential signals
-    activity_state: str               # "deep_work" | "active" | "light" | "meeting" | "break" | "away"
-    flow: bool                        # user is in focused typing; interventions are deferred
     calibrating: bool                 # first 10 min: learning the user's baseline
     sensors: dict[str, bool]          # {"keyboard": True, "mouse": True, "context": True, "vision": False}
-    signals: dict[str, float | str | None]  # key raw values, see INTERFACE.md §5
 
 @dataclass
 class Intervention:

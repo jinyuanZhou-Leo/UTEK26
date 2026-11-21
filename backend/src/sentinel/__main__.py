@@ -6,8 +6,9 @@ import uvicorn
 from sentinel import config
 from sentinel.api import server
 from sentinel.core.loop import Engine
-from sentinel.core.placeholders import NoInterventions, OfflineSensor, PlaceholderModel
+from sentinel.core.placeholders import NoInterventions, OfflineSensor
 from sentinel.models import KeyboardFeatures, VisionFeatures
+from sentinel.scoring.rules import Rules
 from sentinel.sensors.context.mock import MockContextSensor
 from sentinel.sensors.mouse.mock import MockMouseSensor
 from sentinel.sensors.vision.sensor import VisionSensor
@@ -34,7 +35,7 @@ def main() -> None:
     for s in sensors:
         s.start()
     server.engine = Engine(keyboard, mouse, context, vision, PlaceholderModel(), NoInterventions())
-    uvicorn.run(server.app, host=config.HOST, port=args.port) # <<< AI-GENERATED
+    uvicorn.run(server.app, host=config.HOST, port=args.port)
 
 
 if __name__ == "__main__":

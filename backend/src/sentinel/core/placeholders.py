@@ -25,13 +25,10 @@ class PlaceholderModel:
     def update(self, features) -> FatigueState:
         score = min(100.0, features.mouse.clicks * 5.0)   # any simple formula
         return FatigueState(
-            schema_version="1.1", timestamp="", seq=0, interval_s=5.0,
-            systemic_fatigue_score=score, level="low", trend_per_min=0.0,
-            components=ComponentScores(0, 0, 0, 0), top_contributors=[],
-            activity_state="active", flow=False, calibrating=True,
+            timestamp="", seq=0, systemic_fatigue_score=score, level="low",
+            components=ComponentScores(0, 0, 0, 0), top_contributors=[], calibrating=True,
             sensors={"keyboard": features.keyboard.available, "mouse": features.mouse.available,
                      "context": features.context.available, "vision": features.vision.available},
-            signals={},
         )
 
 
