@@ -74,9 +74,9 @@ class KeyboardSensor:
 
             while self.backspace_timestamps and self.backspace_timestamps[0] < cutoff:#remove expired timestamps of all backspace/delete presses
                 self.backspace_timestamps.popleft()
-                
-                timestamps = list(self.timestamps)#convert the deque into a list for feature calculations
-                intervals = features.inter_key_intervals(timestamps) #calculate intervals between consecutive key presses, and excluding intervals of 2 seconds or longer.
+
+            timestamps = list(self.timestamps)#convert the deque into a list for feature calculations
+            intervals = features.inter_key_intervals(timestamps) #calculate intervals between consecutive key presses, and excluding intervals of 2 seconds or longer.
 
             window_s = now - self.last_snapshot_time #calculate the actual duration of the current sampling window.
             idle_s = now - self.last_key_time#calculate the time since the last key press to determine if the user is idle.
