@@ -75,7 +75,7 @@ class KeyboardSensor:
 
             while self.backspace_timestamps and self.backspace_timestamps[0] < cutoff:#remove expired timestamps of all backspace/delete presses
                 self.backspace_timestamps.popleft()
-
+                
             timestamps = list(self.timestamps)#convert the deque into a list for feature calculations
             intervals = features.inter_key_intervals(timestamps) #calculate intervals between consecutive key presses, and excluding intervals of 2 seconds or longer.
 
