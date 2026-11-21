@@ -99,4 +99,5 @@ class Rules:
                                        round(self.parts["cognitive"], 1)
                                        ),
             calibrating=self.normal is None,
+            top_contributors=[],
         )
