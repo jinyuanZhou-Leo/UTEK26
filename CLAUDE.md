@@ -151,7 +151,7 @@ UTEK26/
 - renderer 不直接访问 Node / 后端，统一通过 preload 暴露的 `window.sentinel`。
 - `contextIsolation: true`、`nodeIntegration: false`。
 
-## 9. UI/UX 规范（沿用 Semestra-Next 的设计约定）
+## 9. UI/UX 规范
 
 **shadcn 组件目录：禁止修改**
 - shadcn 组件统一放在 **`frontend/src/renderer/src/ui/`**（`components.json` 的 `aliases.ui` = `@/ui`），只能由 shadcn CLI 生成。
