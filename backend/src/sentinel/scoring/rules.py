@@ -1,0 +1,81 @@
+# Every 5 s update once
+# translate different unit of measurement into a number from 0~1
+# when measurement is less than _S, consequence is 0, when it's Full. consequence is 1
+
+#ex. WRIST_TYPING_S =20 is 0, WRIST_TYPING_FULL =60 is 1
+from sentinel.scoring import config as C
+
+def ramp(value, start, full):
+    """0 below start, 1 at full, straight line in between."""
+    t = (value - start) / (full - start)
+    return max(0.0, min(1.0, t))
+
+
+class Rules:
+    def __init__(self):
+        self.work_s = 0.0            # seconds of work without a 5-min break
+        self.screen_s = 0.0          # seconds without looking away for 20 s
+        self.normal = None           # user's normal values, taken at minute 10
+        self.elapsed_s = 0.0
+        self.parts = {"upper_extremity": 0.0, "ocular": 0.0, "postural": 0.0, "cognitive": 0.0}
+        self.last_alert_s = -C.ALERT_COOLDOWN_S
+
+    def update(self, f, dt=5.0):
+        kb, vis = f.keyboard, f.vision
+        cam = vis.available
+        idle = min(kb.seconds_since_last_key, f.mouse.seconds_since_last_event)
+        self.elapsed_s += dt
+
+        # 1. timers
+        self.work_s = 0.0 if idle >= C.BREAK_S else self.work_s + dt
+        looked_away = (cam and vis.gaze_away_s >= C.LOOKAWAY_S) or idle >= C.LOOKAWAY_S
+        self.screen_s = 0.0 if looked_away else self.screen_s + dt
+        work_min, screen_min = self.work_s / 60, self.screen_s / 60
+
+        # 2. remember the user's normal values once, at minute 10
+        if self.normal is None and self.elapsed_s >= C.BASELINE * 60:
+            self.normal = (vis.blink_rate_per_min, kb.iki_mean_ms, kb.backspace_ratio)
+
+        # 3. loads (0-1) per body part
+        wrist = (C.WRIST_TYPING_WEIGHT * ramp(kb.typing_burst_s / 60, C.WRIST_TYPING_S, C.WRIST_TYPING_FULL)
+                 + C.WRIST_WORK_WEIGHT * ramp(work_min, C.WRIST_WORK_S, C.WRIST_WORK_FULL))
+        eye = ramp(screen_min, C.EYE_LOOKAWAY_S, C.EYE_LOOKAWAY_FULL)
+        neck = ramp(work_min, C.NECK_SITTING_S, C.NECK_SITTING_FULL)
+        mind = 0.0
+        if cam:  # head angle 0-45 deg ~ neck force 12-49 lb (Hansraj)
+            neck = 0.7 * ramp(vis.head_pitch_deg, 0, 45) + 0.3 * neck
+        if self.normal:
+            blink0, iki0, bs0 = self.normal
+            if cam and blink0:
+                drop = (blink0 - vis.blink_rate_per_min) / blink0
+                eye = 0.6 * ramp(drop, C.EYE_BLINK_DROP_S, C.EYE_BLINK_DROP_FULL) + 0.4 * eye
+            if iki0 and bs0 and kb.iki_mean_ms > 0:
+                slower = (kb.iki_mean_ms - iki0) / iki0
+                more_bs = (kb.backspace_ratio - bs0) / bs0
+                mind = 0.5 * ramp(slower, C.MIND_SLOW_S, C.MIND_SLOW_FULL) \
+                     + 0.5 * ramp(more_bs, C.MIND_BACKSPACE_S, C.MIND_BACKSPACE_FULL)
+        loads = {"upper_extremity": wrist, "ocular": eye, "postural": neck, "cognitive": mind}
+
+        # 4. scores move slowly toward load x 100 (up ~10 min, down ~3 min)
+        for name, load in loads.items():
+            old, target = self.parts[name], load * 100
+            minutes = C.RISE_MINUTES if target > old else C.FALL_MINUTES
+            self.parts[name] = old + (target - old) * dt / (minutes * 60)
+
+        # 5. total = 0.6 x average + 0.4 x worst
+        values = list(self.parts.values())
+        total = round(C.AVERAGE_WEIGHT * sum(values) / 4 + C.MAX_WEIGHT * max(values), 1)
+        level = ("low" if total < C.LEVEL_MODERATE else "moderate" if total < C.LEVEL_HIGH
+                 else "high" if total < C.LEVEL_CRITICAL else "critical")
+
+        # 6. alert: score high + user paused + not alerted in last 20 min
+        alert = None
+        if total >= C.ALERT_ON and idle >= C.ALERT_IDLE_S \
+                and self.elapsed_s - self.last_alert_s >= C.ALERT_COOLDOWN_S:
+            worst = max(self.parts, key=self.parts.get)
+            alert = {"target": worst, "message": C.ADVICE[worst]}
+            self.last_alert_s = self.elapsed_s
+
+        return {"systemic_fatigue_score": total, "level": level,
+                "components": {k: round(v, 1) for k, v in self.parts.items()},
+                "calibrating": self.normal is None, "alert": alert}
