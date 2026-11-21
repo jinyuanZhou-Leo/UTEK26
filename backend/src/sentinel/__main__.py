@@ -31,7 +31,12 @@ def main() -> None:
     except ImportError:
         logging.warning("pynput not installed; keyboard sensor disabled")
         keyboard = OfflineSensor("keyboard", KeyboardFeatures(False, 5.0, 0, 0, 0, 0, 0, 0, 0))
-    mouse = MockMouseSensor()           # real MouseSensor comes in step 4
+    try:
+        from sentinel.sensors.mouse.sensor import MouseSensor  # needs the `input` extra (pynput)
+        mouse = MouseSensor()
+    except ImportError:
+        logging.warning("pynput not installed; using mock mouse data")
+        mouse = MockMouseSensor()
     context = MockContextSensor()       # real ContextSensor comes in step 5
     if args.mock or args.no_camera:
         vision = OfflineSensor("vision", VisionFeatures(False, False, 0, 0, 0, 0, 0, None, 1.0))
