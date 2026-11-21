@@ -6,13 +6,13 @@ import uvicorn
 from sentinel import config
 from sentinel.api import server
 from sentinel.core.loop import Engine
-from sentinel.core.placeholders import NoInterventions, OfflineSensor, PlaceholderModel
+from sentinel.core.placeholders import NoInterventions, OfflineSensor
 from sentinel.models import KeyboardFeatures, VisionFeatures
 from sentinel.scoring.rules import Rules
 from sentinel.sensors.vision.sensor import VisionSensor
-from sentinel.sensors.keyboard.sensor import KeyboardSensor
 # from sentinel.sensors.mouse.sensor import MouseSensor
 from sentinel.sensors.mouse.mock import MockMouseSensor
+from sentinel.sensors.context.mock import MockContextSensor
 
 # >>> AI-GENERATED (Claude, 2026-11-21) | reviewed by: Chris | purpose: CLI entry point wiring sensors, engine and server
 def main() -> None:
@@ -25,9 +25,14 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO)
 
-    keyboard = KeyboardSensor("keyboard", KeyboardFeatures(False, 5.0, 0, 0, 0, 0, 0, 0, 0))
+    try:
+        from sentinel.sensors.keyboard.sensor import KeyboardSensor  # needs the `input` extra (pynput)
+        keyboard = KeyboardSensor()
+    except ImportError:
+        logging.warning("pynput not installed; keyboard sensor disabled")
+        keyboard = OfflineSensor("keyboard", KeyboardFeatures(False, 5.0, 0, 0, 0, 0, 0, 0, 0))
     mouse = MockMouseSensor()           # real MouseSensor comes in step 4
-    context = KeyboardSensor()       # real ContextSensor comes in step 5
+    context = MockContextSensor()       # real ContextSensor comes in step 5
     if args.mock or args.no_camera:
         vision = OfflineSensor("vision", VisionFeatures(False, False, 0, 0, 0, 0, 0, None, 1.0))
     else:
@@ -35,7 +40,7 @@ def main() -> None:
     sensors = [keyboard, mouse, context, vision]
     for s in sensors:
         s.start()
-    server.engine = Engine(keyboard, mouse, context, vision, PlaceholderModel(), NoInterventions())
+    server.engine = Engine(keyboard, mouse, context, vision, Rules(), NoInterventions())
     uvicorn.run(server.app, host=config.HOST, port=args.port)
 
 
