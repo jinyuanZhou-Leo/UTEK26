@@ -7,28 +7,33 @@ from sentinel.scoring import config as C
 
 def ramp(value, start, full):
     """0 below start, 1 at full, straight line in between."""
-    t = (value - start) / (full - start)
-    return max(0.0, min(1.0, t))
+    t = (value - start) / (full - start)    #calculate a value between 0-1
+    return max(0.0, min(1.0, t))    #let t be between 0~1, less than 0 return 0, larger than 1 return 1
 
 
 class Rules:
-    def __init__(self):
+    def __init__(self): #initial value, always call itself so can keep the memory
         self.work_s = 0.0            # seconds of work without a 5-min break
         self.screen_s = 0.0          # seconds without looking away for 20 s
-        self.normal = None           # user's normal values, taken at minute 10
-        self.elapsed_s = 0.0
+        self.normal = None           # user's normal values, taken at minute 10, won't change later
+        self.elapsed_s = 0.0         # the total programming running time
         self.parts = {"upper_extremity": 0.0, "ocular": 0.0, "postural": 0.0, "cognitive": 0.0}
-        self.last_alert_s = -C.ALERT_COOLDOWN_S
+        self.last_alert_s = -C.ALERT_COOLDOWN_S #assuming 20 minutes ago there's one alert, so at the beginning of the program, allows alert
 
-    def update(self, f, dt=5.0):
+    def update(self, f, dt=5.0):    #f is the packing data: keyboard, mouse and vision
         kb, vis = f.keyboard, f.vision
-        cam = vis.available
-        idle = min(kb.seconds_since_last_key, f.mouse.seconds_since_last_event)
-        self.elapsed_s += dt
+        cam = vis.available     #determine if the camaera is available
+        idle = min(kb.seconds_since_last_key, f.mouse.seconds_since_last_event) 
+        #choose the smaller time that the user hasn't used of keyboard or mouse
+        self.elapsed_s += dt   #add 5 seconds
 
-        # 1. timers
+
+        # timers
         self.work_s = 0.0 if idle >= C.BREAK_S else self.work_s + dt
+        #if break > 5 minutes, rested, otherwise keep working(add 5 minutes)
+
         looked_away = (cam and vis.gaze_away_s >= C.LOOKAWAY_S) or idle >= C.LOOKAWAY_S
+        # if idle>20s or camera see you look away with visual>20s, reset.
         self.screen_s = 0.0 if looked_away else self.screen_s + dt
         work_min, screen_min = self.work_s / 60, self.screen_s / 60
 
