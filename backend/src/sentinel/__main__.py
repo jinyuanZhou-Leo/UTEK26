@@ -21,9 +21,13 @@ def main() -> None:
     parser.add_argument("--no-camera", action="store_true", help="disable the webcam")
     parser.add_argument("--headless", action="store_true", help="run without the desktop app")
     parser.add_argument("--port", type=int, default=config.PORT)
+    parser.add_argument("--demo", action="store_true", help="speed up fatigue timers 30x for demos")
     args = parser.parse_args()          # e.g. args.mock is True if --mock was given
 
     logging.basicConfig(level=logging.INFO)
+    if args.demo:
+        from sentinel.scoring import config as scoring_config
+        scoring_config.TIME_SCALE = 30.0
 
     try:
         from sentinel.sensors.keyboard.sensor import KeyboardSensor  # needs the `input` extra (pynput)

@@ -46,6 +46,8 @@ LOOKAWAY_S = 20              # >=20s resets look away
 BASELINE = 10        # frist 10 min used to calculate normal behaviors
 
 #Score
+# Demo: 1 real second counts as TIME_SCALE seconds (set by `--demo`), so 20-minute thresholds show up in ~40 s
+TIME_SCALE = 1.0
 RISE_MINUTES = 10            # 10 minutes to reach the target
 FALL_MINUTES = 3             # 3 minutes to cool down
 AVERAGE_WEIGHT = 0.6        

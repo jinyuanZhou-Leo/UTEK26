@@ -24,6 +24,7 @@ class Rules:
 
     def update(self, f, dt=5.0):    #f is the packing data: keyboard, mouse and vision
         kb, vis = f.keyboard, f.vision
+        dt = dt * C.TIME_SCALE    # demo mode speeds up all timers
         cam = vis.available     #determine if the camaera is available
         idle = min(kb.seconds_since_last_key, f.mouse.seconds_since_last_event) 
         #choose the smaller time that the user hasn't used of keyboard or mouse
@@ -44,7 +45,7 @@ class Rules:
             self.normal = (vis.blink_rate_per_min, kb.iki_mean_ms, kb.backspace_ratio)
 
         # 3. loads (0-1) per body part
-        wrist = (C.WRIST_TYPING_WEIGHT * ramp(kb.typing_burst_s / 60, C.WRIST_TYPING_S, C.WRIST_TYPING_FULL)
+        wrist = (C.WRIST_TYPING_WEIGHT * ramp(kb.typing_burst_s * C.TIME_SCALE / 60, C.WRIST_TYPING_S, C.WRIST_TYPING_FULL)
                  + C.WRIST_WORK_WEIGHT * ramp(work_min, C.WRIST_WORK_S, C.WRIST_WORK_FULL))
         eye = ramp(screen_min, C.EYE_LOOKAWAY_S, C.EYE_LOOKAWAY_FULL)
         neck = ramp(work_min, C.NECK_SITTING_S, C.NECK_SITTING_FULL)
