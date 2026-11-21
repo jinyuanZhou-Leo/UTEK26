@@ -28,8 +28,8 @@
 
 ## 第 0 步：全员（11:00–11:30）
 
-- [ ] 按 SETUP.md 装好环境。
-  检查：`cd backend && uv run python scripts/check_env.py` 最后显示全部通过。
+- [ ] 按 SETUP.md 装好环境。后端依赖按角色装：Keyboard、Mouse 用 `uv sync --extra input`，Webcam 用 `uv sync --extra vision`，UI/UX 用 `uv sync --all-extras`。**Intel Mac 装不了摄像头的库，Intel Mac 的同学不要分到 Webcam。**
+  检查：`cd backend && uv run python scripts/check_env.py` 最后显示全部通过（没装的组显示 SKIP，正常）。
 - [ ] 四个人一起把 INTERFACE.md 第 3 节过一遍。对字段有意见现在提，**12:00 之后不改**。
 - [ ] 建好自己的分支：`git checkout -b feat/<你的角色>`。
 - [ ] macOS 同学：确认已经给终端开了"辅助功能""输入监控""摄像头"权限（SETUP.md 2.3）。
@@ -187,6 +187,9 @@ pynput 鼠标文档：https://pynput.readthedocs.io/en/latest/mouse.html
 ### 2.6 联调（14:15–15:30）
 
 - [ ] `__main__.py` 默认使用真实的 4 个 sensor；`--no-camera` 时 vision 用一个永远 `available=False` 的对象。
+- [ ] **没装某个依赖分组时也要能启动**（比如 Intel Mac 没有 mediapipe）：创建真实 sensor 时写成
+  `try: from sentinel.sensors.vision.sensor import VisionSensor` / `except ImportError: 用 available=False 的空 sensor，logging.warning("vision extra not installed")`。键盘、鼠标、前台应用同理（缺 `pynput` / `pywinctl`）。
+  检查：只用 `uv sync`（不带 extra）装环境，`uv run python -m sentinel` 也能启动，`/metrics` 里 `sensors` 全是 false。
 - [ ] 14:30 第一次联调：拉取所有人的分支，`uv run python -m sentinel` 跑通。
 - [ ] 补全 `/metrics/history`、`/config`、`/control`、WebSocket 的 `hello`、`intervention`、`intervention_resolved`、`sensor_status` 消息。
 - [ ] `/health` 里用 `psutil.Process().cpu_percent()` 和 `memory_info().rss` 报告本进程资源。
@@ -209,6 +212,8 @@ pynput 鼠标文档：https://pynput.readthedocs.io/en/latest/mouse.html
 **注意：mediapipe 1.x 删掉了 `mp.solutions`。** 网上大部分教程和 AI 给的代码都还在用 `mp.solutions.face_mesh`，在我们的版本上会直接报错。一律用 Tasks API 的 `FaceLandmarker`。官方指南：https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker/python
 
 模型文件已经在 `backend/models/face_landmarker.task`，不用下载。
+
+环境用 `uv sync --extra vision` 安装（**Intel Mac 装不了**，请用 Apple Silicon Mac 或 Windows）。`import cv2`、`import mediapipe` 只能写在 `sensors/vision/` 里面的文件，不要写进别的模块，这样没装 vision 组的队友也能运行后端。
 
 ### 3.1 打开摄像头（11:30–12:00，不依赖别人）
 
