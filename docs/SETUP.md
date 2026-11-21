@@ -54,12 +54,26 @@ cd UTEK26
 
 ## 第 2 步：Python 后端环境（全员）
 
-### 2.1 安装依赖
+### 2.1 安装依赖（按你的模块装）
+
+后端依赖分成三组，只装你需要的：
+
+| 你的角色 | 命令 |
+|---|---|
+| Keyboard、Mouse | `uv sync --extra input` |
+| Webcam | `uv sync --extra vision` |
+| UI/UX（只需要跑后端给前端用） | `uv sync --all-extras` |
+| 联调、演示用的电脑 | `uv sync --all-extras` |
+
 ```bash
 cd backend
-uv sync
+uv sync --extra input        # 换成你自己那一行
 ```
-uv 会自动：下载 Python 3.12 → 创建 `backend/.venv` → 按 `uv.lock` 安装**完全一样版本**的所有库。全队的环境因此保持一致。
+uv 会自动：下载 Python 3.12 → 创建 `backend/.venv` → 按 `uv.lock` 安装**完全一样版本**的库。不带任何参数的 `uv sync` 只装核心（fastapi、uvicorn、psutil）。
+
+**Intel Mac**：mediapipe 没有 Intel Mac 版本，所以 `vision` 组在 Intel Mac 上会自动跳过，`uv sync --all-extras` 也不会报错。后端照常运行，只是摄像头相关数据为 `available=False`。Intel Mac 的同学不要负责 Webcam 模块；需要测摄像头时，换一台 Apple Silicon Mac 或 Windows 电脑。
+
+> 注意：`uv sync` 会删掉没在这次命令里列出的分组。比如先 `--extra input` 再 `--extra vision`，input 组会被卸载。两个都要就用 `uv sync --extra input --extra vision` 或 `--all-extras`。
 
 > **规则**：不要用 `pip install`。要加新库，用 `uv add <包名>`，然后在群里说一声（`pyproject.toml` 和 `uv.lock` 会变，需要 commit）。
 
@@ -69,8 +83,8 @@ uv 会自动：下载 Python 3.12 → 创建 `backend/.venv` → 按 `uv.lock` �
 ```bash
 uv run python scripts/check_env.py
 ```
-这个脚本会检查：Python 版本、所有库能不能 import、mediapipe 新版 API、模型文件、FaceLandmarker 能不能跑。
-✅ 检查：最后一行显示 `12/12 checks passed.`
+这个脚本只检查**你装了的分组**：没装的会显示 `[SKIP]`，不算失败。装了 vision 时还会检查 mediapipe 新版 API、模型文件、FaceLandmarker 能不能跑。
+✅ 检查：最后一行显示 `N/N checks passed.`（N 取决于你装了哪些组）
 
 **Webcam 同学**再跑：
 ```bash
@@ -173,7 +187,7 @@ npm run dev
 ## 项目里环境相关的文件（都要 commit）
 | 文件 | 作用 |
 |---|---|
-| `backend/pyproject.toml` | Python 依赖列表，锁定 Python 3.12 |
+| `backend/pyproject.toml` | Python 依赖列表（核心 + `input` + `vision` 三组），锁定 Python 3.12 |
 | `backend/uv.lock` | 所有 Python 库的精确版本（Win / Mac Intel / Mac Apple Silicon 都包含） |
 | `backend/.python-version` | 告诉 uv 用 3.12 |
 | `backend/models/face_landmarker.task` | MediaPipe 人脸模型（3.8MB，Apache 2.0，来源：Google MediaPipe），提前放进 repo，免得现场下载失败 |
@@ -193,7 +207,8 @@ npm run dev
 | `uv sync` 很慢 | 第一次要下载 Python 和 mediapipe（约 100MB），正常。比赛 Wi-Fi 慢就连手机热点 |
 | Windows 上 `import mediapipe` 报 DLL load failed | 没装 VC++ 运行库，做 1.4 |
 | `AttributeError: module 'mediapipe' has no attribute 'solutions'` | 用了旧教程的写法。mediapipe 1.x 只能用 Tasks API（`FaceLandmarker`），见 TODO.md 第 3 节 |
-| Intel Mac 上 mediapipe 版本是 0.10.21 | 正常。mediapipe 1.x 没有 Intel Mac 版本，uv 自动换成 0.10.21，Tasks API 用法一样 |
+| Intel Mac 上没有装 mediapipe / opencv | 正常。`vision` 组在 Intel Mac 上自动跳过，后端照常运行，摄像头数据为不可用 |
+| `ModuleNotFoundError: No module named 'pynput'`（或 `cv2`、`mediapipe`） | 没装对应的分组。按 2.1 重新 `uv sync --extra ...` |
 | Mac 上 `keyboard/mouse events` 一直是 0 | 权限没给或没重启终端，见 2.3 |
 | Mac 上摄像头打不开 / 画面全黑 | 摄像头权限，见 2.3；或者摄像头被 Zoom / FaceTime 占用 |
 | Windows 上摄像头打不开 | 见 2.4；或者被 Teams / 相机 App 占用 |
