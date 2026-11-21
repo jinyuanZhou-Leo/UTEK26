@@ -1,3 +1,4 @@
+# AI-GENERATED FILE (Claude, 2026-11-21) | reviewed by: Chris
 from sentinel.models import ComponentScores, FatigueState
 
 
@@ -21,8 +22,6 @@ class OfflineSensor:
 class PlaceholderModel:
     """Temporary scorer until Keyboard's FatigueModel is merged."""
 
-    # AI Assistance: Claude (Anthropic), assisted with the implementation
-    # of this function. Accessed November 21, 2026.
     def update(self, features) -> FatigueState:
         score = min(100.0, features.mouse.clicks * 5.0)   # any simple formula
         return FatigueState(
