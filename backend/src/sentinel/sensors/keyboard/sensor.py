@@ -5,6 +5,7 @@ from pynput import keyboard
 
 from sentinel.models import KeyboardFeatures
 from . import features
+from sentinel.scoring.config import TYPING_PAUSE_S
 
 class KeyboardSensor:
     name = "keyboard"
@@ -39,7 +40,7 @@ class KeyboardSensor:
         with self.lock:
             now = time.monotonic()
 
-            if self.burst_start is None or now - self.last_key_time > 2:# If this is the first key press or if the last key press was more than 2 seconds ago, start a new burst
+            if self.burst_start is None or now - self.last_key_time > TYPING_PAUSE_S:# If this is the first key press or if the last key press was more than 2 seconds ago, start a new burst
                 self.burst_start = now
 
             self.timestamps.append(now)
@@ -85,7 +86,7 @@ class KeyboardSensor:
             # If the user has been idle for more than 2 seconds,
             # the current typing burst has ended.
             burst_s = 0.0
-            if self.burst_start is not None and idle_s <= 2:
+            if self.burst_start is not None and idle_s <= TYPING_PAUSE_S:
                 burst_s = now - self.burst_start
 
       # package the calculated features into a KeyboardFeatures object.

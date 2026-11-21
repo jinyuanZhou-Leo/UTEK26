@@ -1,9 +1,9 @@
 #Wrist
-WRIST_TYPING_S = 20      #continuous typing starts
+WRIST_TYPING_S = 10      #continuous typing starts (microbreak every 20-30 min)
 #ref: Mclean. 20 minutes take a rest
-WRIST_TYPING_FULL = 60
-WRIST_WORK_S = 20       #continuous work starts
-WRIST_WORK_FULL = 60
+WRIST_TYPING_FULL = 30
+WRIST_WORK_S = 15       #continuous work starts
+WRIST_WORK_FULL = 45
 WRIST_TYPING_WEIGHT = 0.6
 WRIST_WORK_WEIGHT = 0.4
 
@@ -13,8 +13,8 @@ WRIST_WORK_WEIGHT = 0.4
 EYE_BLINK_DROP_S = 0.0   # blink rate decrease rate relative to normal
 EYE_BLINK_DROP_FULL = 0.6    
 EYE_BLINK_WEIGHT = 0.5      #highest weight for blink
-EYE_LOOKAWAY_S = 20      #Look away for each 20 minutes
-EYE_LOOKAWAY_FULL = 40
+EYE_LOOKAWAY_S = 10      #20-20-20 rule: load builds from 10 min, full at 20 min
+EYE_LOOKAWAY_FULL = 20
 EYE_LOOKAWAY_WEIGHT = 0.3
 EYE_DISTANCE_S = 50      # >= 50cm fine
 EYE_DISTANCE_FULL = 35       # <=35cm bad
@@ -27,8 +27,8 @@ NECK_FORCE_TABLE = [(0, 12), (15, 27), (30, 40), (45, 49), (60, 60)]
 NECK_FORCE_S = 12        # 0°
 NECK_FORCE_FULL = 49         # 45°
 NECK_FORCE_WEIGHT = 0.7
-NECK_SITTING_S = 30      # continuous sitting time
-NECK_SITTING_FULL = 60
+NECK_SITTING_S = 20      # continuous sitting time (stand every 20-30 min)
+NECK_SITTING_FULL = 45
 NECK_SITTING_WEIGHT = 0.3
 
 #Mental
@@ -43,13 +43,13 @@ MIND_BACKSPACE_WEIGHT = 0.5
 TYPING_PAUSE_S = 30          # >30s, resets typing timer
 BREAK_S = 5 * 60             # >=5m, resets working timer
 LOOKAWAY_S = 20              # >=20s resets look away
-BASELINE = 10        # frist 10 min used to calculate normal behaviors
+BASELINE = 5        # first 5 min used to calculate normal behaviors
 
 #Score
 # Demo: 1 real second counts as TIME_SCALE seconds (set by `--demo`), so 20-minute thresholds show up in ~40 s
 TIME_SCALE = 1.0
-RISE_MINUTES = 10            # 10 minutes to reach the target
-FALL_MINUTES = 3             # 3 minutes to cool down
+RISE_MINUTES = 5            # ~5 minutes to reach the target
+FALL_MINUTES = 2             # ~2 minutes to cool down
 AVERAGE_WEIGHT = 0.6        
 MAX_WEIGHT = 0.4
 # Toal Score= 0.6* average of 4 parts + 0.4 * worst part 
