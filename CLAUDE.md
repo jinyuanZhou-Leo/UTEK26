@@ -29,13 +29,25 @@ UTEK 2026 Programming 赛题：做一个后台运行的 "invisible sentinel"。�
 | 项 | 版本 / 选择 | 说明 |
 |---|---|---|
 | Python | **3.12**（`requires-python = ">=3.12,<3.13"`，`.python-version` = 3.12） | 3.12 是唯一能让所有库在 Windows、Apple Silicon Mac、Intel Mac 上都装得上的版本（Intel Mac 上 mediapipe 最高只支持到 3.12） |
-| 环境管理 | **uv**（`backend/pyproject.toml` + `uv.lock`） | 不要用 pip / conda；加库用 `uv add <包名>` |
+| 环境管理 | **uv**（`backend/pyproject.toml` + `uv.lock`），依赖按模块分组，见下方 | 不要用 pip / conda。加核心库 `uv add <包>`；加到某个模块 `uv add --optional input <包>` 或 `--optional vision` |
 | Web/API | FastAPI + uvicorn | `/metrics`、WebSocket `/ws` |
 | 键盘、鼠标 | pynput 1.8 | |
 | 前台窗口 | pywinctl | |
 | 系统资源 | psutil | |
-| 摄像头 | opencv-python + mediapipe（Win / Apple Silicon 用 1.2.x，Intel Mac 自动用 0.10.21） | **只用 Tasks API**（`mediapipe.tasks.python.vision.FaceLandmarker`）。1.x **已删除 `mp.solutions`**，网上教程的旧写法会报错 |
+| 摄像头 | opencv-python + mediapipe 1.2.x（`vision` extra；**Intel Mac 不安装**，没有可用的 wheel） | **只用 Tasks API**（`mediapipe.tasks.python.vision.FaceLandmarker`）。1.x **已删除 `mp.solutions`**，网上教程的旧写法会报错 |
 | 测试 / lint | pytest、ruff | |
+
+**依赖分组（按模块安装）：**
+
+| 分组 | 包含 | 谁需要 | 安装命令 |
+|---|---|---|---|
+| 核心（默认） | fastapi、uvicorn、psutil | 所有人 | `uv sync` |
+| `input` | pynput、pywinctl | Keyboard、Mouse | `uv sync --extra input` |
+| `vision` | numpy、opencv-python、mediapipe | Webcam | `uv sync --extra vision` |
+| 全部 | 以上全部 | 联调、演示 | `uv sync --all-extras` |
+
+- `vision` 在 Intel Mac 上会被自动跳过（pyproject 里有平台条件），所以 Intel Mac 跑 `uv sync --all-extras` 也不会报错，只是没有摄像头功能。
+- **代码必须在没装某个分组时也能启动**：`import cv2`、`import mediapipe`、`import pynput`、`import pywinctl` 只能写在对应 sensor 自己的文件里，不能写在 `models.py`、`core/`、`scoring/`、`intervention/`、`api/` 里。主循环创建 sensor 时用 `try: ... except ImportError:`，导入失败就换成 `available=False` 的空 sensor，并打一条 warning。
 
 ### 前端（Electron 桌面 App）
 | 包 | 版本 |
@@ -74,7 +86,7 @@ UTEK26/
 ```
 | 做什么 | 命令 |
 |---|---|
-| 装/同步 Python 依赖 | `cd backend && uv sync` |
+| 装/同步 Python 依赖 | `cd backend && uv sync --extra <input/vision>`（全部：`--all-extras`） |
 | 环境自检 | `uv run python scripts/check_env.py [--camera] [--input]` |
 | 运行后端 | `uv run python -m sentinel`（`--mock` 假数据，`--no-camera`，`--headless`） |
 | 单独测某个 sensor | `uv run python -m sentinel.sensors.keyboard`（或 `mouse`、`context`、`vision --preview`） |
@@ -115,7 +127,7 @@ UTEK26/
 3. JSON 文件**原子写入**：先写 `.tmp` 再 `os.replace`。默认路径 `~/.utekinetics/metrics.json`。
 4. 后端必须能**脱离 Electron 独立运行**（`--headless`），评委只看 JSON / 端口也要能拿满分。
 5. 服务只监听 **127.0.0.1**，不对外网开放。
-6. 没有摄像头、没有权限（macOS）、摄像头被占用时都要能正常运行，自动降级。
+6. 没有摄像头、没有权限（macOS）、摄像头被占用、**没装 `vision` 或 `input` 分组**时都要能正常运行，自动降级。
 
 **性能（Efficiency 评分项）**
 7. 后端进程目标：平均 **CPU < 5%**（不开摄像头 < 1%），**内存 < 300MB**。

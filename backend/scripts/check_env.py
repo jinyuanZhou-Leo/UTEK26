@@ -1,6 +1,8 @@
 # AI-GENERATED FILE (Claude, 2026-11-21) | reviewed by: <姓名> | purpose: environment self-check for all backend scopes
 """Environment self-check.
 
+Only checks the extras that are installed (core / input / vision).
+
 Usage (from backend/):
     uv run python scripts/check_env.py            # libraries + model file
     uv run python scripts/check_env.py --camera   # also try to open the webcam
@@ -10,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.util
 import platform
 import sys
 import time
@@ -35,13 +38,28 @@ def check_python() -> None:
     record("Python 3.12", (v.major, v.minor) == (3, 12), platform.python_version())
 
 
+GROUPS = {
+    "core": ["fastapi", "uvicorn", "psutil"],
+    "input": ["pynput", "pywinctl"],
+    "vision": ["numpy", "cv2", "mediapipe"],
+}
+
+
+def installed(mod: str) -> bool:
+    return importlib.util.find_spec(mod) is not None
+
+
 def check_imports() -> None:
-    for mod in ["fastapi", "uvicorn", "psutil", "numpy", "cv2", "mediapipe", "pywinctl", "pynput"]:
-        try:
-            m = importlib.import_module(mod)
-            record(f"import {mod}", True, getattr(m, "__version__", ""))
-        except Exception as e:  # noqa: BLE001 - we want to report any failure
-            record(f"import {mod}", False, f"{type(e).__name__}: {e}")
+    for group, mods in GROUPS.items():
+        if group != "core" and not any(installed(m) for m in mods):
+            print(f"[SKIP] {group} extra not installed (uv sync --extra {group})")
+            continue
+        for mod in mods:
+            try:
+                m = importlib.import_module(mod)
+                record(f"import {mod}", True, getattr(m, "__version__", ""))
+            except Exception as e:  # noqa: BLE001 - we want to report any failure
+                record(f"import {mod}", False, f"{type(e).__name__}: {e}")
 
 
 def check_mediapipe_tasks() -> None:
@@ -125,13 +143,19 @@ def main() -> int:
     print(f"Platform: {platform.system()} {platform.machine()}\n")
     check_python()
     check_imports()
-    check_mediapipe_tasks()
-    check_model()
-    check_face_landmarker()
-    if args.camera:
-        check_camera()
+    if installed("mediapipe"):
+        check_mediapipe_tasks()
+        check_model()
+        check_face_landmarker()
+        if args.camera:
+            check_camera()
+    elif args.camera:
+        print("[SKIP] --camera: vision extra not installed")
     if args.input:
-        check_input()
+        if installed("pynput"):
+            check_input()
+        else:
+            print("[SKIP] --input: input extra not installed")
 
     failed = [r for r in results if not r[1]]
     print(f"\n{len(results) - len(failed)}/{len(results)} checks passed.")
