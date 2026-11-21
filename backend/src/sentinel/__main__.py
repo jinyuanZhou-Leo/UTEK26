@@ -34,7 +34,7 @@ def main() -> None:
     for s in sensors:
         s.start()
     server.engine = Engine(keyboard, mouse, context, vision, PlaceholderModel(), NoInterventions())
-    uvicorn.run(server.app, host=config.HOST, port=args.port)
+    uvicorn.run(server.app, host=config.HOST, port=args.port) # <<< AI-GENERATED
 
 
 if __name__ == "__main__":
