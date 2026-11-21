@@ -21,19 +21,21 @@ class KeyboardSensor:
         self.lock=threading.Lock()  # Lock for thread-safe access to shared data
 
 
-def self.start(self)->None:
-    if selft.listener is not None:
-       return#if listener is already running, do nothing
+def start(self)->None:
+    if self.listener is not None:
+        #if listener is already running, do nothing
+        return
+
     self.start_time=time.monotonic()
     self.last_key_time=self.start_time
     self.last_snapshot_time=self.start_time
-   try: #try aq piece code that might fail
-    self.listener=keyboard.Listener(on_press=self.on_key_press)
-    self.listener.start()
-    self.available=True
-   except Exception:
-        self.listener=None
-        self.available=False
+    try: #try aq piece code that might fail
+        self.listener=keyboard.Listener(on_press=self.on_key_press)
+        self.listener.start()
+        self.available=True
+    except Exception:
+            self.listener=None
+            self.available=False
 
 
 
