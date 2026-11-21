@@ -1,4 +1,4 @@
-// AI-GENERATED FILE (Claude, 2026-11-21) | reviewed by: <姓名> | purpose: React entry stub
+// AI-GENERATED FILE (Claude, 2026-11-21) | purpose: React entry stub
 import './index.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

@@ -1,4 +1,4 @@
-# AI-GENERATED FILE (Claude, 2026-11-21) | reviewed by: <姓名> | purpose: environment self-check for all backend scopes
+# AI-GENERATED FILE (Claude, 2026-11-21) | purpose: environment self-check for all backend scopes
 """Environment self-check.
 
 Only checks the extras that are installed (core / input / vision).
